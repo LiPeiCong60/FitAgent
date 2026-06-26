@@ -1,0 +1,161 @@
+<!--pages/body-stats/body-stats.wxml-->
+<view class="page-container">
+
+  <!-- 顶部区域 -->
+  <view class="hero-section">
+    <text class="hero-title">数据统计</text>
+    <text class="hero-subtitle">追踪身体变化，见证成长轨迹</text>
+  </view>
+
+  <!-- 数据汇总卡片 -->
+  <view class="card summary-card">
+    <view class="section-title">当前数据</view>
+    <view class="stats-grid">
+      <view class="stat-item">
+        <text class="stat-label">体重</text>
+        <view class="stat-value-row">
+          <text class="stat-value">{{latestWeight}}</text>
+          <text class="stat-unit">kg</text>
+        </view>
+        <text class="stat-trend {{weightTrend === '↓' ? 'trend-down' : 'trend-up'}}" wx:if="{{weightTrend}}">{{weightTrend}}</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-label">体脂率</text>
+        <view class="stat-value-row">
+          <text class="stat-value">{{latestBodyFat}}</text>
+          <text class="stat-unit">%</text>
+        </view>
+        <text class="stat-trend {{bodyFatTrend === '↓' ? 'trend-down' : 'trend-up'}}" wx:if="{{bodyFatTrend}}">{{bodyFatTrend}}</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-label">身高</text>
+        <view class="stat-value-row">
+          <text class="stat-value">{{latestHeight}}</text>
+          <text class="stat-unit">cm</text>
+        </view>
+      </view>
+    </view>
+    <view class="stats-grid stats-grid-secondary">
+      <view class="stat-item-sm">
+        <text class="stat-label-sm">瘦体重</text>
+        <view class="stat-value-row">
+          <text class="stat-value-sm">{{latestLeanMass}}</text>
+          <text class="stat-unit-sm">kg</text>
+        </view>
+      </view>
+      <view class="stat-item-sm">
+        <text class="stat-label-sm">腰围</text>
+        <view class="stat-value-row">
+          <text class="stat-value-sm">{{latestWaist}}</text>
+          <text class="stat-unit-sm">cm</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 折线图卡片 -->
+  <view class="card chart-card">
+    <view class="section-title">变化趋势</view>
+
+    <!-- 指标 Tab 栏 -->
+    <scroll-view scroll-x class="tab-scroll">
+      <view class="tab-bar">
+        <view
+          wx:for="{{tabs}}"
+          wx:key="key"
+          class="tab-item {{chartMode === item.key ? 'active' : ''}}"
+          style="{{chartMode === item.key && item.color ? 'background:' + item.color + ';' : ''}}"
+          bindtap="onTabChange"
+          data-key="{{item.key}}"
+        >
+          <text class="tab-icon">{{item.icon}}</text>
+          <text class="tab-label">{{item.label}}</text>
+        </view>
+      </view>
+    </scroll-view>
+
+    <!-- Canvas 折线图 -->
+    <view class="chart-wrapper">
+      <canvas
+        id="statsCanvas"
+        type="2d"
+        class="stats-canvas"
+      ></canvas>
+      <view class="chart-loading" wx:if="{{loading}}">
+        <text>加载中...</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 录入表单卡片 -->
+  <view class="card form-card">
+    <view class="section-title">记录数据</view>
+    <text class="form-tip">填写你想记录的项目，数据将同步到「身体数据」档案</text>
+
+    <view class="form-item">
+      <view class="form-label">
+        <text class="form-icon">⚖️</text>
+        <text>体重</text>
+      </view>
+      <view class="input-wrapper">
+        <input type="digit" placeholder="请输入" placeholder-class="input-placeholder" value="{{inputWeight}}" bindinput="onWeightInput" />
+        <text class="input-unit">kg</text>
+      </view>
+    </view>
+
+    <view class="form-item">
+      <view class="form-label">
+        <text class="form-icon">📏</text>
+        <text>身高</text>
+      </view>
+      <view class="input-wrapper">
+        <input type="digit" placeholder="请输入" placeholder-class="input-placeholder" value="{{inputHeight}}" bindinput="onHeightInput" />
+        <text class="input-unit">cm</text>
+      </view>
+    </view>
+
+    <view class="form-item">
+      <view class="form-label">
+        <text class="form-icon">🔥</text>
+        <text>体脂率</text>
+      </view>
+      <view class="input-wrapper">
+        <input type="digit" placeholder="请输入" placeholder-class="input-placeholder" value="{{inputBodyFat}}" bindinput="onBodyFatInput" />
+        <text class="input-unit">%</text>
+      </view>
+    </view>
+
+    <view class="form-item">
+      <view class="form-label">
+        <text class="form-icon">💪</text>
+        <text>瘦体重</text>
+        <text class="auto-badge" wx:if="{{leanMassAutoCalc}}">自动</text>
+      </view>
+      <view class="input-wrapper">
+        <input type="digit" placeholder="{{leanMassAutoCalc ? '已自动计算' : '请输入'}}" placeholder-class="input-placeholder" value="{{inputLeanMass}}" bindinput="onLeanMassInput" />
+        <text class="input-unit">kg</text>
+      </view>
+    </view>
+
+    <view class="form-item">
+      <view class="form-label">
+        <text class="form-icon">📐</text>
+        <text>腰围</text>
+      </view>
+      <view class="input-wrapper">
+        <input type="digit" placeholder="请输入" placeholder-class="input-placeholder" value="{{inputWaist}}" bindinput="onWaistInput" />
+        <text class="input-unit">cm</text>
+      </view>
+    </view>
+
+    <text class="form-note" wx:if="{{leanMassAutoCalc}}">💡 瘦体重已根据体重和体脂率自动计算（瘦体重 = 体重 × (1 - 体脂率%)），你也可以手动修改</text>
+  </view>
+
+  <!-- 保存按钮 -->
+  <view class="btn-area">
+    <button class="btn-primary" bindtap="onSave" loading="{{saving}}">
+      {{saving ? '保存中...' : '保存记录'}}
+    </button>
+  </view>
+
+</view>

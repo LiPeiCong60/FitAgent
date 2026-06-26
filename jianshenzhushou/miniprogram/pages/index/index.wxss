@@ -1,0 +1,270 @@
+/* pages/index/index.wxss — 清新黑白 · 优化排版 */
+
+.page-container {
+  padding: 0 32rpx 80rpx;
+  min-height: 100vh;
+}
+
+/* ---- 欢迎区域 ---- */
+.welcome-section {
+  padding: 64rpx 0 40rpx;
+}
+
+.welcome-greeting {
+  display: block;
+  font-size: 30rpx;
+  color: var(--color-text-secondary);
+  margin-bottom: 8rpx;
+}
+
+.welcome-title {
+  display: block;
+  font-size: 48rpx;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin-bottom: 8rpx;
+  letter-spacing: 2rpx;
+}
+
+.welcome-desc {
+  display: block;
+  font-size: 26rpx;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* ---- 数据摘要卡片 ---- */
+.summary-card {
+  background: #ffffff;
+}
+
+.summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8rpx;
+}
+
+.summary-header .section-title {
+  margin-bottom: 0;
+}
+
+.edit-btn {
+  font-size: 26rpx;
+  color: #666666;
+  font-weight: 500;
+  padding: 8rpx 0;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16rpx;
+}
+
+.stat-item {
+  padding: 24rpx 20rpx;
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+}
+
+.stat-item.accent {
+  background: #f0f0f0;
+}
+
+.stat-label {
+  display: block;
+  font-size: 22rpx;
+  color: var(--color-text-muted);
+  margin-bottom: 8rpx;
+}
+
+.stat-item.accent .stat-label {
+  color: var(--color-text-secondary);
+}
+
+.stat-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6rpx;
+}
+
+.stat-value {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+.stat-unit {
+  font-size: 22rpx;
+  color: var(--color-text-muted);
+}
+
+.stat-item.accent .stat-value {
+  color: #1a1a1a;
+}
+
+.stat-item.accent .stat-unit {
+  color: var(--color-text-muted);
+}
+
+/* ---- 今日速览卡片 ---- */
+.overview-quick {
+  background: #ffffff;
+  margin-top: 24rpx;
+  display: flex;
+  gap: 24rpx;
+}
+
+.overview-quick-item {
+  flex: 1;
+  padding: 28rpx 24rpx;
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+}
+
+.oq-label {
+  font-size: 24rpx;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  margin-bottom: 8rpx;
+}
+
+.oq-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6rpx;
+}
+
+.oq-value {
+  font-size: 44rpx;
+  font-weight: 800;
+  color: #1a1a1a;
+  line-height: 1;
+}
+
+.oq-unit {
+  font-size: 22rpx;
+  color: var(--color-text-muted);
+}
+
+/* ---- 引导卡片 ---- */
+.guide-card {
+  text-align: center;
+  padding: 60rpx 40rpx 48rpx;
+  background: #ffffff;
+  border: 1rpx dashed rgba(0, 0, 0, 0.12);
+}
+
+.guide-icon {
+  font-size: 72rpx;
+  margin-bottom: 20rpx;
+}
+
+.guide-title {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 8rpx;
+}
+
+.guide-desc {
+  display: block;
+  font-size: 26rpx;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.guide-btn {
+  margin-top: 36rpx;
+}
+
+/* ---- 功能服务区 ---- */
+.feature-section-title {
+  margin-top: 16rpx;
+}
+
+.feature-list {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  border: 1rpx solid var(--color-border);
+  overflow: hidden;
+}
+
+.feature-row {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 28rpx;
+  border-bottom: 1rpx solid var(--color-border);
+  transition: background 0.2s;
+}
+
+.feature-row:last-child {
+  border-bottom: none;
+}
+
+.feature-row-hover {
+  background: var(--color-bg);
+}
+
+.feature-icon-wrap {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+}
+
+.feature-icon-wrap.diet {
+  background: #f0f0f0;
+}
+
+.feature-icon-wrap.workout {
+  background: #f0f0f0;
+}
+
+.feature-icon-wrap.ai {
+  background: #f0f0f0;
+}
+
+.feature-icon-wrap.stats {
+  background: #f0f0f0;
+}
+
+.feature-icon {
+  font-size: 38rpx;
+}
+
+.feature-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.feature-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.feature-desc {
+  font-size: 24rpx;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.feature-arrow {
+  font-size: 40rpx;
+  color: var(--color-text-muted);
+  margin-left: 12rpx;
+  font-weight: 300;
+}

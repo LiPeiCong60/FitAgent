@@ -1,0 +1,97 @@
+<!--pages/diet/diet.wxml-->
+<view class="page-container">
+  <view class="date-bar">
+    <text class="date-arrow" bindtap="prevDay">‹</text>
+    <text class="date-text">{{displayDate}}</text>
+    <text class="date-arrow" bindtap="nextDay">›</text>
+  </view>
+
+  <view class="card overview-card">
+    <view class="overview-main">
+      <view class="overview-center">
+        <text class="overview-eaten">{{totalCalories}}</text>
+        <text class="overview-label">已摄入 kcal</text>
+      </view>
+      <view class="overview-ring">
+        <view class="ring-info">
+          <text class="ring-value {{remaining < 0 ? 'over' : ''}}">{{remaining}}</text>
+          <text class="ring-label">{{remaining >= 0 ? '剩余' : '超出'}} kcal</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="target-summary">
+      <text class="target-summary-text">目标热量 {{targetCalories}} kcal</text>
+      <text class="target-summary-text">比例 {{carbsRatio}} / {{proteinRatio}} / {{fatRatio}}</text>
+    </view>
+
+    <view class="macro-bar">
+      <view class="macro-item">
+        <text class="macro-label">蛋白质 {{proteinRatio}}%</text>
+        <view class="macro-progress"><view class="macro-fill protein" style="width: {{proteinPercent}}%"></view></view>
+        <text class="macro-value">{{totalProtein}}g / {{proteinTarget}}g</text>
+      </view>
+      <view class="macro-item">
+        <text class="macro-label">脂肪 {{fatRatio}}%</text>
+        <view class="macro-progress"><view class="macro-fill fat" style="width: {{fatPercent}}%"></view></view>
+        <text class="macro-value">{{totalFat}}g / {{fatTarget}}g</text>
+      </view>
+      <view class="macro-item">
+        <text class="macro-label">碳水 {{carbsRatio}}%</text>
+        <view class="macro-progress"><view class="macro-fill carbs" style="width: {{carbsPercent}}%"></view></view>
+        <text class="macro-value">{{totalCarbs}}g / {{carbsTarget}}g</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="meal-section" wx:for="{{meals}}" wx:key="type">
+    <view class="meal-header">
+      <view class="meal-title-row">
+        <text class="meal-icon">{{item.icon}}</text>
+        <text class="meal-name">{{item.name}}</text>
+        <text class="meal-calories">{{item.totalCalories}} kcal</text>
+      </view>
+      <text class="meal-add-btn" bindtap="addFood" data-meal="{{item.type}}">+</text>
+    </view>
+
+    <view class="food-list" wx:if="{{item.foods.length > 0}}">
+      <view class="food-item" wx:for="{{item.foods}}" wx:for-item="food" wx:key="_id">
+        <view class="food-info">
+          <text class="food-name">{{food.food_name}}</text>
+          <text class="food-detail">{{food.grams}}g</text>
+        </view>
+        <view class="food-right">
+          <text class="food-cal">{{food.calories}} kcal</text>
+          <text class="food-delete" bindtap="deleteFood" data-id="{{food._id}}">✕</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="meal-empty" wx:else>
+      <text class="meal-empty-text" bindtap="addFood" data-meal="{{item.type}}">+ 添加食物</text>
+    </view>
+  </view>
+
+  <view class="ai-btn-area">
+    <button class="btn-ai" bindtap="openAiChat">
+      和 AI 聊聊今天吃什么
+    </button>
+    <button class="btn-outline summary-btn" bindtap="summarizeDiet">
+      🤖 AI 总结今日饮食
+    </button>
+  </view>
+
+  <!-- AI 总结结果区 -->
+  <view class="summary-area" wx:if="{{summaryLoading || dailySummary}}">
+    <view class="summary-loading" wx:if="{{summaryLoading}}">
+      <text class="loading-icon">🤖</text>
+      <text>AI 正在为您分析今日饮食...</text>
+    </view>
+    <view class="summary-result card" wx:if="{{dailySummary}}">
+      <view class="summary-header">
+        <text class="summary-title">🌟 今日饮食点评</text>
+      </view>
+      <text class="summary-text">{{dailySummary}}</text>
+    </view>
+  </view>
+</view>

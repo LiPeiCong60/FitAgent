@@ -1,0 +1,128 @@
+<!--pages/index/index.wxml-->
+<view class="page-container">
+
+  <!-- 顶部欢迎区域 -->
+  <view class="welcome-section">
+    <view class="welcome-content">
+      <text class="welcome-greeting">你好 👋</text>
+      <text class="welcome-title">AI 智能健身助手</text>
+      <text class="welcome-desc">你的私人 AI 教练，科学健身从这里开始</text>
+    </view>
+  </view>
+
+  <!-- 用户数据摘要 -->
+  <view class="card summary-card" wx:if="{{hasProfile}}">
+    <view class="summary-header">
+      <view class="section-title">我的身体数据</view>
+      <text class="edit-btn" bindtap="goToProfile">修改 →</text>
+    </view>
+    <view class="stats-grid">
+      <view class="stat-item">
+        <text class="stat-label">身高</text>
+        <view class="stat-value-row">
+          <text class="stat-value">{{userProfile.height}}</text>
+          <text class="stat-unit">cm</text>
+        </view>
+      </view>
+      <view class="stat-item">
+        <text class="stat-label">体重</text>
+        <view class="stat-value-row">
+          <text class="stat-value">{{userProfile.weight}}</text>
+          <text class="stat-unit">kg</text>
+        </view>
+      </view>
+      <view class="stat-item">
+        <text class="stat-label">基础代谢</text>
+        <view class="stat-value-row">
+          <text class="stat-value">{{userProfile.bmr}}</text>
+          <text class="stat-unit">kcal</text>
+        </view>
+      </view>
+      <view class="stat-item accent">
+        <text class="stat-label">每日目标</text>
+        <view class="stat-value-row">
+          <text class="stat-value">{{userProfile.daily_calories_target}}</text>
+          <text class="stat-unit">kcal</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 今日速览卡片 -->
+  <view class="overview-quick" wx:if="{{hasProfile}}">
+    <view class="overview-quick-item">
+      <text class="oq-label">今日热量</text>
+      <view class="oq-value-row">
+        <text class="oq-value">{{todayCalories || 0}}</text>
+        <text class="oq-unit">/ {{userProfile.daily_calories_target}} kcal</text>
+      </view>
+    </view>
+    <view class="overview-quick-item">
+      <text class="oq-label">本周打卡</text>
+      <view class="oq-value-row">
+        <text class="oq-value">{{weekWorkoutCount || 0}}</text>
+        <text class="oq-unit">天</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 未填写引导 -->
+  <view class="card guide-card" wx:else>
+    <view class="guide-icon">📋</view>
+    <text class="guide-title">开始你的健身之旅</text>
+    <text class="guide-desc">先完善身体数据，AI 才能为你定制计划</text>
+    <button class="btn-primary guide-btn" bindtap="goToProfile">
+      录入身体数据
+    </button>
+  </view>
+
+  <!-- 功能入口 -->
+  <view class="section-title feature-section-title">功能服务</view>
+
+  <view class="feature-list">
+    <view class="feature-row" bindtap="onFeatureTap" data-feature="diet" hover-class="feature-row-hover">
+      <view class="feature-icon-wrap diet">
+        <text class="feature-icon">🍎</text>
+      </view>
+      <view class="feature-info">
+        <text class="feature-name">饮食记录</text>
+        <text class="feature-desc">记录每日饮食，自动计算热量摄入</text>
+      </view>
+      <text class="feature-arrow">›</text>
+    </view>
+
+    <view class="feature-row" bindtap="onFeatureTap" data-feature="workout" hover-class="feature-row-hover">
+      <view class="feature-icon-wrap workout">
+        <text class="feature-icon">🏋️</text>
+      </view>
+      <view class="feature-info">
+        <text class="feature-name">训练计划</text>
+        <text class="feature-desc">AI 生成个性化周训练方案</text>
+      </view>
+      <text class="feature-arrow">›</text>
+    </view>
+
+    <view class="feature-row" bindtap="onFeatureTap" data-feature="ai" hover-class="feature-row-hover">
+      <view class="feature-icon-wrap ai">
+        <text class="feature-icon">🤖</text>
+      </view>
+      <view class="feature-info">
+        <text class="feature-name">AI 综合助手</text>
+        <text class="feature-desc">全能教练，解答你的健身与饮食疑问</text>
+      </view>
+      <text class="feature-arrow">›</text>
+    </view>
+
+    <view class="feature-row" bindtap="onFeatureTap" data-feature="stats" hover-class="feature-row-hover">
+      <view class="feature-icon-wrap stats">
+        <text class="feature-icon">📊</text>
+      </view>
+      <view class="feature-info">
+        <text class="feature-name">数据统计</text>
+        <text class="feature-desc">可视化健身进度与身体变化</text>
+      </view>
+      <text class="feature-arrow">›</text>
+    </view>
+  </view>
+
+</view>

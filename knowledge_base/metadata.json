@@ -1,0 +1,19 @@
+{
+  "project": "FitAgent RAG Knowledge Base",
+  "language": "zh-CN",
+  "recommended_chunk_size_chars": 700,
+  "recommended_chunk_overlap_chars": 120,
+  "top_k": 5,
+  "documents": [
+    "00_README_RAG使用说明.md",
+    "01_能量平衡_BMR_TDEE_热量目标.md",
+    "02_三大营养素_蛋白质_碳水_脂肪.md",
+    "03_减脂策略_体重管理_平台期.md",
+    "04_力量训练计划_增肌与进步原则.md",
+    "05_训练记录_饮食记录_长期记忆分析.md",
+    "06_常见动作提示_安全与纠错.md",
+    "07_AI健身助手回答边界与风险提醒.md",
+    "08_参考来源_用于README.md"
+  ],
+  "disclaimer": "仅用于健康管理和健身知识参考，不替代医生、营养师、康复师或专业教练建议。"
+}

@@ -1,0 +1,7 @@
+<view class="page">
+  <view class="card">
+    <text class="title">AI动作纠正</text>
+    <text class="desc">该页面已预留，后续可接入动作上传与纠正流程。</text>
+    <button class="btn" bindtap="goBack">返回</button>
+  </view>
+</view>

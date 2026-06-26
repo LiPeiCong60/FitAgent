@@ -1,0 +1,360 @@
+<!-- pages/workout/workout.wxml -->
+<view class="page-container">
+  <view class="tab-bar">
+    <view class="tab-item {{activeTab === 0 ? 'active' : ''}}" bindtap="switchTab" data-index="0">📅 周计划</view>
+    <view class="tab-item {{activeTab === 1 ? 'active' : ''}}" bindtap="switchTab" data-index="1">🏋️ 今日打卡</view>
+    <view class="tab-item {{activeTab === 2 ? 'active' : ''}}" bindtap="switchTab" data-index="2">📝 训练记录</view>
+  </view>
+
+  <view class="tab-content" wx:if="{{activeTab === 0}}">
+    <view class="header-section">
+      <view class="header-top">
+        <text class="page-title">{{planName || '自定义训练计划'}}</text>
+        <text class="edit-icon" bindtap="editPlanName">✎</text>
+      </view>
+      <text class="page-desc">设计你的每周训练安排，也可以让 AI 直接生成基础计划。</text>
+    </view>
+
+    <view class="action-bar">
+      <button class="btn-sm btn-outline" bindtap="addDay">+ 添加训练日</button>
+      <button class="btn-sm btn-primary" bindtap="openAIPopup">AI 生成计划</button>
+      <button class="btn-sm btn-primary" style="background-color:#10a37f;" bindtap="openWorkoutAiChat">AI 健身助手</button>
+    </view>
+
+    <view class="loading-state" wx:if="{{generating}}">
+      <view class="loading-icon">🤖</view>
+      <text class="loading-text">AI 正在生成计划...</text>
+      <text class="loading-subText">请稍候几秒</text>
+    </view>
+
+    <block wx:else>
+      <view class="plan-container" wx:if="{{routine && routine.length > 0}}">
+        <view class="day-card card" wx:for="{{routine}}" wx:for-index="dayIndex" wx:key="dayNum">
+          <view class="day-header">
+            <view class="day-header-left">
+              <text class="day-name">{{item.dayNum}}</text>
+              <text class="day-title" bindtap="editDayTarget" data-index="{{dayIndex}}">{{item.target || '设置训练部位 ✎'}}</text>
+            </view>
+            <text class="day-delete" bindtap="deleteDay" data-index="{{dayIndex}}">✕</text>
+          </view>
+
+          <view class="action-list">
+            <view class="action-item" wx:for="{{item.actions}}" wx:for-item="action" wx:for-index="actionIndex" wx:key="name">
+              <view class="action-info" bindtap="editExercise" data-day-index="{{dayIndex}}" data-action-index="{{actionIndex}}">
+                <view class="action-name-row">
+                  <text class="action-name">{{action.name}}</text>
+                  <text class="action-edit-hint">编辑</text>
+                </view>
+                <text class="action-desc" wx:if="{{action.desc}}">{{action.desc}}</text>
+              </view>
+              <view class="action-right">
+                <view class="action-stats">
+                  <text class="action-sets">{{action.sets}} 组</text>
+                  <text class="action-reps">{{action.reps}}</text>
+                </view>
+                <text class="action-delete" bindtap="deleteExercise" data-day-index="{{dayIndex}}" data-action-index="{{actionIndex}}">✕</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="day-footer-actions">
+            <text class="text-btn add" bindtap="addExercise" data-day-index="{{dayIndex}}">+ 添加动作</text>
+            <text class="text-btn pick" bindtap="pickDayForToday" data-day-index="{{dayIndex}}">设为今日训练</text>
+            <text class="text-btn append" bindtap="appendDayToToday" data-day-index="{{dayIndex}}">追加到今日打卡</text>
+          </view>
+        </view>
+
+        <view class="footer-btns">
+          <button class="btn-primary" bindtap="saveWeeklyPlan">保存计划</button>
+          <button class="btn-secondary" bindtap="clearPlan">清空计划</button>
+        </view>
+      </view>
+
+      <view class="empty-state card" wx:else>
+        <view class="empty-icon">🗓️</view>
+        <text class="empty-title">从零开始你的计划</text>
+        <text class="empty-desc">可以手动添加训练日，也可以让 AI 按你的目标先生成一版。</text>
+      </view>
+    </block>
+  </view>
+
+  <view class="tab-content tracker-tab" wx:if="{{activeTab === 1}}">
+    <view class="tracker-header">
+      <view class="date-header">
+        <text class="date-text">{{todayTitle || '自由训练模式'}}</text>
+        <text class="status-badge {{workoutStatus}}">{{workoutStatus === 'active' ? '进行中' : '未开始'}}</text>
+      </view>
+
+      <view class="timer-display">
+        <text class="timer-text">{{formattedTime}}</text>
+      </view>
+
+      <view class="main-actions">
+        <button class="btn-primary" wx:if="{{workoutStatus === 'idle'}}" bindtap="startWorkout">开始训练计时</button>
+        <button class="btn-danger" wx:if="{{workoutStatus === 'active'}}" bindtap="finishWorkout">完成本次训练</button>
+      </view>
+
+      <view class="rest-settings">
+        <text>默认组间休息：{{defaultRestTime}} 秒</text>
+      </view>
+    </view>
+
+    <view class="rest-banner {{isResting ? 'show' : ''}}" wx:if="{{isResting}}">
+      <view class="rest-content">
+        <text class="rest-icon">⏱️</text>
+        <text class="rest-text">休息中</text>
+        <text class="rest-time">{{formattedRestTime}}</text>
+      </view>
+      <view class="rest-controls">
+        <view class="rest-adj-btn" bindtap="adjustRestTime" data-amount="-15">-15s</view>
+        <view class="rest-adj-btn" bindtap="adjustRestTime" data-amount="15">+15s</view>
+        <button class="btn-sm btn-outline-white" bindtap="skipRest">跳过</button>
+      </view>
+    </view>
+
+    <view class="tracker-main-add">
+      <button class="btn-primary btn-large-add" bindtap="openAddTrackerExercisePopup">
+        <text class="plus-icon">+</text>
+        <text>添加动作</text>
+      </button>
+      <text class="hint-text" wx:if="{{todayWorkout.length === 0}}">你可以直接添加动作开始训练，也可以从左侧“周计划”导入或追加动作。</text>
+    </view>
+
+    <view class="exercise-list" wx:if="{{todayWorkout.length > 0}}">
+      <view class="exercise-card card" wx:for="{{todayWorkout}}" wx:for-index="exIndex" wx:key="id">
+        <view class="ex-header">
+          <text class="ex-name">{{item.name}}</text>
+          <text class="ex-delete" bindtap="deleteTrackerExercise" data-index="{{exIndex}}">✕</text>
+        </view>
+
+        <view class="set-list">
+          <view class="set-header-row">
+            <text class="col-set">组数</text>
+            <text class="col-weight">重量(kg)</text>
+            <text class="col-reps">次数</text>
+            <text class="col-timer">耗时</text>
+            <text class="col-action">状态</text>
+          </view>
+
+          <view class="set-row {{set.state}}" wx:for="{{item.sets}}" wx:for-item="set" wx:for-index="setIndex" wx:key="index">
+            <text class="col-set">{{setIndex + 1}}</text>
+            <view class="col-weight">
+              <input class="set-input" type="digit" value="{{set.weight}}" data-ex="{{exIndex}}" data-set="{{setIndex}}" data-field="weight" bindchange="onSetInput" disabled="{{set.state === 'completed'}}" placeholder="-" />
+            </view>
+            <view class="col-reps">
+              <input class="set-input" type="number" value="{{set.reps}}" data-ex="{{exIndex}}" data-set="{{setIndex}}" data-field="reps" bindchange="onSetInput" disabled="{{set.state === 'completed'}}" placeholder="-" />
+            </view>
+            <view class="col-timer">
+              <text class="set-time-display">{{set.state === 'active' ? activeSetSeconds + 's' : (set.setTime > 0 ? set.setTime + 's' : '-')}}</text>
+            </view>
+            <view class="col-action">
+              <view wx:if="{{set.state === 'idle'}}" class="btn-set-start" bindtap="startSet" data-ex="{{exIndex}}" data-set="{{setIndex}}">开始</view>
+              <view wx:elif="{{set.state === 'active'}}" class="btn-set-finish" bindtap="finishSet" data-ex="{{exIndex}}" data-set="{{setIndex}}">完成</view>
+              <view wx:else class="btn-set-done" bindtap="resetSet" data-ex="{{exIndex}}" data-set="{{setIndex}}">重置</view>
+            </view>
+          </view>
+        </view>
+
+        <view class="set-actions">
+          <text class="add-set-text" bindtap="addTrackerSet" data-index="{{exIndex}}">+ 添加一组</text>
+          <text class="remove-set-text" bindtap="removeTrackerSet" data-index="{{exIndex}}" wx:if="{{item.sets.length > 1}}">- 移除一组</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="tab-content history-tab" wx:if="{{activeTab === 2}}">
+    <view class="header-section">
+      <view class="header-top">
+        <text class="page-title">训练记录</text>
+      </view>
+      <text class="page-desc">每一次训练都会沉淀在这里。</text>
+    </view>
+
+    <view class="loading-state" wx:if="{{loadingHistory}}">
+      <view class="loading-icon">📚</view>
+      <text class="loading-text">正在加载记录...</text>
+    </view>
+
+    <block wx:else>
+      <view class="history-list" wx:if="{{workoutHistory.length > 0}}">
+        <view class="history-card card" wx:for="{{workoutHistory}}" wx:for-index="index" wx:key="_id" bindtap="openHistoryDetail" data-index="{{index}}">
+          <view class="history-header">
+            <view class="history-title-wrap">
+              <text class="history-title">{{item.title || '自由训练'}}</text>
+              <text class="history-date">{{item.formattedDate}}</text>
+            </view>
+            <text class="history-delete" catchtap="deleteHistoryRecord" data-id="{{item._id}}">删除</text>
+          </view>
+
+          <view class="history-stats">
+            <view class="stat-item">
+              <text class="stat-value">{{item.formattedDuration}}</text>
+              <text class="stat-label">总时长</text>
+            </view>
+            <view class="stat-item">
+              <text class="stat-value">{{item.exercises.length}}</text>
+              <text class="stat-label">完成动作</text>
+            </view>
+            <view class="stat-item">
+              <text class="stat-value">{{item.formattedRestTime}}</text>
+              <text class="stat-label">组间休息</text>
+            </view>
+          </view>
+
+          <view class="history-exercises">
+            <text class="ex-list-text">包含动作：{{item.exerciseSummary}}</text>
+          </view>
+
+          <view class="history-detail-entry">
+            <text>点按查看详情</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="empty-state card" wx:else>
+        <view class="empty-icon">📈</view>
+        <text class="empty-title">暂无训练记录</text>
+        <text class="empty-desc">去“今日打卡”完成一次训练，记录会出现在这里。</text>
+        <view class="empty-btns">
+          <button class="btn-primary" bindtap="switchTab" data-index="1">去打卡</button>
+        </view>
+      </view>
+    </block>
+  </view>
+
+  <view class="modal-mask" wx:if="{{showAIPopup}}">
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">AI 生成周计划</text>
+        <text class="modal-close" bindtap="closeAIPopup">✕</text>
+      </view>
+      <view class="modal-body">
+        <view class="form-group">
+          <text class="form-label">每周训练几天？</text>
+          <picker mode="selector" range="{{[1,2,3,4,5,6,7]}}" bindchange="onAiDaysChange">
+            <view class="picker-value">{{aiDays}} 天</view>
+          </picker>
+        </view>
+        <view class="form-group">
+          <text class="form-label">侧重部位 / 目标（选填）</text>
+          <input class="form-input" value="{{aiFocus}}" bindinput="onAiFocusInput" placeholder="例如：背部、力量提升" />
+        </view>
+      </view>
+      <view class="modal-footer">
+        <button class="btn-secondary modal-btn" bindtap="closeAIPopup">取消</button>
+        <button class="btn-primary modal-btn" bindtap="generateAIPlan">生成</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="modal-mask" wx:if="{{showExercisePopup}}">
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">{{isEditingContent ? '编辑动作' : '添加动作'}}</text>
+        <text class="modal-close" bindtap="closeExercisePopup">✕</text>
+      </view>
+      <view class="modal-body">
+        <view class="form-group">
+          <text class="form-label">动作名称</text>
+          <input class="form-input" value="{{currentExercise.name}}" bindinput="onExNameInput" placeholder="例如：杠铃卧推" />
+        </view>
+        <view class="form-row">
+          <view class="form-group half">
+            <text class="form-label">组数</text>
+            <input class="form-input" type="number" value="{{currentExercise.sets}}" bindinput="onExSetsInput" placeholder="例如：4" />
+          </view>
+          <view class="form-group half">
+            <text class="form-label">计划次数 / 时长</text>
+            <input class="form-input" value="{{currentExercise.reps}}" bindinput="onExRepsInput" placeholder="例如：8-12次" />
+          </view>
+        </view>
+        <view class="form-group">
+          <text class="form-label">动作要点 / 备注（选填）</text>
+          <input class="form-input" value="{{currentExercise.desc}}" bindinput="onExDescInput" placeholder="例如：全程控制，不借力" />
+        </view>
+      </view>
+      <view class="modal-footer">
+        <button class="btn-secondary modal-btn" bindtap="closeExercisePopup">取消</button>
+        <button class="btn-primary modal-btn" bindtap="saveExercise">确定</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="modal-mask" wx:if="{{showAddPopup}}">
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">添加动作</text>
+        <text class="modal-close" bindtap="closeAddTrackerExercisePopup">✕</text>
+      </view>
+      <view class="modal-body">
+        <view class="form-group">
+          <text class="form-label">动作名称</text>
+          <input class="form-input" value="{{newExName}}" bindinput="onNewExNameInput" placeholder="例如：哑铃飞鸟" />
+        </view>
+        <view class="form-group">
+          <text class="form-label">初始组数</text>
+          <input class="form-input" type="number" value="{{newExSets}}" bindinput="onNewExSetsInput" placeholder="默认 4" />
+        </view>
+      </view>
+      <view class="modal-footer">
+        <button class="btn-secondary modal-btn" bindtap="closeAddTrackerExercisePopup">取消</button>
+        <button class="btn-primary modal-btn" bindtap="confirmAddTrackerExercise">添加</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="modal-mask" wx:if="{{showHistoryDetail}}" bindtap="closeHistoryDetail">
+    <view class="modal-content history-detail-modal" catchtap="noop">
+      <view class="modal-header">
+        <text class="modal-title">{{selectedHistoryRecord.title || '训练详情'}}</text>
+        <text class="modal-close" bindtap="closeHistoryDetail">✕</text>
+      </view>
+      <view class="modal-body" wx:if="{{selectedHistoryRecord}}">
+        <view class="history-detail-meta">
+          <view class="history-detail-chip">
+            <text class="history-detail-chip-label">记录时间</text>
+            <text class="history-detail-chip-value">{{selectedHistoryRecord.formattedDate}}</text>
+          </view>
+          <view class="history-detail-chip">
+            <text class="history-detail-chip-label">训练时长</text>
+            <text class="history-detail-chip-value">{{selectedHistoryRecord.formattedDuration}}</text>
+          </view>
+          <view class="history-detail-chip">
+            <text class="history-detail-chip-label">组间休息</text>
+            <text class="history-detail-chip-value">{{selectedHistoryRecord.formattedRestTime}}</text>
+          </view>
+        </view>
+
+        <view class="history-detail-list" wx:if="{{selectedHistoryRecord.exercises && selectedHistoryRecord.exercises.length > 0}}">
+          <view class="history-detail-item" wx:for="{{selectedHistoryRecord.exercises}}" wx:for-index="exIndex" wx:key="name">
+            <view class="history-detail-item-header">
+              <text class="history-detail-item-name">{{item.name}}</text>
+              <text class="history-detail-item-count">{{item.sets.length}} 组</text>
+            </view>
+            <view class="history-detail-set history-detail-set-header">
+              <text>组数</text>
+              <text>重量(kg)</text>
+              <text>次数</text>
+              <text>耗时</text>
+            </view>
+            <view class="history-detail-set" wx:for="{{item.sets}}" wx:for-item="setItem" wx:for-index="setIndex" wx:key="index">
+              <text>第{{setIndex + 1}}组</text>
+              <input class="history-detail-input" type="digit" value="{{setItem.weight}}" data-ex="{{exIndex}}" data-set="{{setIndex}}" data-field="weight" bindinput="onHistorySetInput" placeholder="-" />
+              <input class="history-detail-input" value="{{setItem.reps}}" data-ex="{{exIndex}}" data-set="{{setIndex}}" data-field="reps" bindinput="onHistorySetInput" placeholder="-" />
+              <text>{{setItem.setTime || 0}}s</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="empty-state card" wx:else>
+          <text class="empty-desc">这条记录暂无动作明细。</text>
+        </view>
+      </view>
+      <view class="modal-footer" wx:if="{{selectedHistoryRecord}}">
+        <button class="btn-secondary modal-btn" bindtap="closeHistoryDetail">关闭</button>
+        <button class="btn-primary modal-btn" bindtap="saveHistoryDetail" loading="{{savingHistoryDetail}}">保存修改</button>
+      </view>
+    </view>
+  </view>
+</view>

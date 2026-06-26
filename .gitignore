@@ -1,0 +1,48 @@
+# OS and editor files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Secrets and local-only config
+.env
+.env.*
+!.env.example
+project.private.config.json
+*.pem
+*.key
+*.p12
+*.mobileprovision
+*.keystore
+*.jks
+
+# Dependencies and build outputs
+node_modules/
+miniprogram_npm/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+dist/
+build/
+
+# Generated data and archives
+.chroma/
+*.log
+err.txt
+*.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
+
+# Personal media that should not be published
+photos/
+uploads/
+private-media/
+*.jpg
+*.jpeg
+*.heic
+*.mov
+*.mp4
+*.avi

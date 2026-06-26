@@ -1,0 +1,49 @@
+<!-- pages/workout-ai-chat/workout-ai-chat.wxml -->
+<view class="page-container">
+  <scroll-view
+    class="chat-scroll"
+    scroll-y
+    scroll-into-view="{{scrollToId}}"
+    scroll-with-animation
+  >
+    <view class="chat-list">
+      <view
+        class="msg-row {{item.role === 'user' ? 'msg-user' : 'msg-ai'}}"
+        wx:for="{{messages}}"
+        wx:key="id"
+        id="msg-{{item.id}}"
+      >
+        <view class="msg-avatar">
+          <text>{{item.role === 'user' ? '我' : 'AI'}}</text>
+        </view>
+        <view class="msg-bubble">
+          <text class="msg-text" user-select>{{item.content}}</text>
+        </view>
+      </view>
+
+      <view class="msg-row msg-ai" wx:if="{{loading}}">
+        <view class="msg-avatar"><text>AI</text></view>
+        <view class="msg-bubble typing">
+          <text class="typing-dot">●</text>
+          <text class="typing-dot">●</text>
+          <text class="typing-dot">●</text>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="input-bar">
+    <input
+      class="chat-input"
+      placeholder="问问 AI：今天练什么、动作怎么做、如何安排恢复..."
+      placeholder-class="chat-placeholder"
+      value="{{inputValue}}"
+      bindinput="onInput"
+      confirm-type="send"
+      bindconfirm="sendMessage"
+    />
+    <view class="send-btn {{inputValue ? 'active' : ''}}" bindtap="sendMessage">
+      <text class="send-icon">→</text>
+    </view>
+  </view>
+</view>

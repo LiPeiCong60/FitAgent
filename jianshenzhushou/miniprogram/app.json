@@ -1,0 +1,21 @@
+{
+    "pages": [
+        "pages/index/index",
+        "pages/profile/profile",
+        "pages/diet/diet",
+        "pages/diet-add/diet-add",
+        "pages/ai-chat/ai-chat",
+        "pages/workout/workout",
+        "pages/workout-ai-chat/workout-ai-chat",
+        "pages/body-stats/body-stats"
+    ],
+    "window": {
+        "backgroundColor": "#f7f8fa",
+        "backgroundTextStyle": "dark",
+        "navigationBarBackgroundColor": "#ffffff",
+        "navigationBarTitleText": "AI 健身助手",
+        "navigationBarTextStyle": "black"
+    },
+    "sitemapLocation": "sitemap.json",
+    "style": "v2"
+}

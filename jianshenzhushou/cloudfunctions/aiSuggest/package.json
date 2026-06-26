@@ -1,0 +1,9 @@
+{
+    "name": "ai-suggest",
+    "version": "1.0.0",
+    "description": "AI 服务：食物拍照识别 + 三餐建议",
+    "main": "index.js",
+    "dependencies": {
+        "wx-server-sdk": "~2.6.3"
+    }
+}
