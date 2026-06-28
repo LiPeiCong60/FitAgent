@@ -255,15 +255,38 @@ MOTION_REQUEST_TIMEOUT_SECONDS=20
 
 ## 功能展示
 
-当前仓库未包含正式截图，可在 `docs/images/` 下补充小程序页面截图后替换以下占位图。
-
-![首页截图](./docs/images/home.png)
-
-![饮食记录截图](./docs/images/diet.png)
-
-![AI 对话截图](./docs/images/ai-chat.png)
-
-![训练计划截图](./docs/images/workout.png)
+<table>
+  <tr>
+    <td align="center">
+      <img src="./docs/images/home.png" width="220" alt="首页概览" />
+      <br />
+      首页概览
+    </td>
+    <td align="center">
+      <img src="./docs/images/diet-add.png" width="220" alt="添加食物" />
+      <br />
+      添加食物
+    </td>
+    <td align="center">
+      <img src="./docs/images/workout.png" width="220" alt="训练计划" />
+      <br />
+      训练计划
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="./docs/images/ai-chat.png" width="220" alt="AI 综合助手" />
+      <br />
+      AI 综合助手
+    </td>
+    <td align="center">
+      <img src="./docs/images/body-stats.png" width="220" alt="数据统计" />
+      <br />
+      数据统计
+    </td>
+    <td align="center"></td>
+  </tr>
+</table>
 
 ## 说明
 

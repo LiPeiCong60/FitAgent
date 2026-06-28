@@ -1,4 +1,6 @@
 {
+  "miniprogramRoot": "jianshenzhushou/miniprogram/",
+  "cloudfunctionRoot": "jianshenzhushou/cloudfunctions/",
   "setting": {
     "es6": true,
     "postcss": true,
@@ -20,5 +22,7 @@
     "include": []
   },
   "appid": "touristappid",
+  "projectname": "FitAgent",
+  "description": "AI 智能健身助手",
   "editorSetting": {}
 }
