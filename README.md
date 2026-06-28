@@ -1,7 +1,3 @@
-<div align="center">
-  <img src="./docs/images/logo.svg" width="120" alt="FitAgent Logo" />
-  <h1>FitAgent：AI 智能健身助手微信小程序</h1>
-</div>
 
 FitAgent 是一个基于微信小程序、云开发、FastAPI RAG 服务和大模型 API 的智能健身助手，支持用户档案管理、饮食记录、AI 食物识别、训练计划生成、健身问答和身体数据追踪。
 
