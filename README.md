@@ -1,292 +1,283 @@
 # FitAgent：AI 智能健身助手微信小程序
 
-FitAgent 是一个面向普通健身用户的 AI 智能健身助手微信小程序。项目围绕“记录更轻、建议更准、长期可追踪”的目标，整合用户档案、身体数据、饮食记录、训练计划、训练打卡、AI 食物识别、RAG 健身问答和动作纠正 MVP，帮助用户把日常健身行为沉淀成可分析、可反馈的数据闭环。
+FitAgent 是一个基于微信小程序、云开发、FastAPI RAG 服务和大模型 API 的智能健身助手，支持用户档案管理、饮食记录、AI 食物识别、训练计划生成、健身问答和身体数据追踪。
 
-## 项目背景
+## 项目简介
 
-很多普通用户在减脂、增肌或保持健康时，会遇到几个典型问题：
+FitAgent 面向有减脂、增肌、保持健康等需求的普通健身用户。项目希望解决日常健身中“记录麻烦、建议泛化、数据分散、反馈不连续”的问题：用户可以在小程序中维护个人档案，记录饮食和训练，通过 AI 获取饮食分析、训练建议和自然语言问答，并将关键结果沉淀到云数据库中。
 
-- 饮食记录成本高，食物热量和三大营养素难估算。
-- 训练计划不够个性化，练什么、练几天、如何进阶经常靠经验。
-- 普通 AI 问答容易停留在通用建议，不能结合用户自己的饮食、训练和身体变化。
-- 身体数据、饮食数据、训练数据分散记录，难以形成长期反馈。
+项目整体流程围绕“记录数据 -> 调用 AI 分析 -> 结构化存储 -> 长期追踪”展开。小程序负责用户交互和数据展示，微信云函数负责业务编排、数据库读写和大模型调用，FastAPI RAG 服务负责健身知识检索增强，动作分析服务作为后续动作纠正能力的 MVP 扩展。
 
-FitAgent 的核心思路是：用小程序承载低门槛交互，用微信云开发完成数据存储和云函数编排，用大模型处理识别、总结、计划生成和问答，用 RAG 知识库提高健身问答的专业性和边界感。
+## 项目亮点
 
-## 核心功能
+- **微信小程序与云开发闭环**：基于微信原生小程序实现多页面业务流程，通过云函数和云数据库完成用户档案、饮食记录、训练计划、训练打卡和身体数据管理。
+- **统一 AI 调用入口**：核心云函数 `aiSuggest` 封装食物图片识别、饮食总结、训练计划生成和健身问答等能力，并包含超时、重试和备用模型回退逻辑。
+- **多模态食物识别**：用户上传食物图片后，小程序先上传到云存储，再由云函数获取临时访问地址并调用视觉模型，返回结构化的食物名称、热量和三大营养素估算。
+- **RAG 增强问答服务**：独立 FastAPI 服务读取 `knowledge_base` 中的健身知识文档，使用 Embedding 和 ChromaDB 建立向量索引，为健身问答提供可检索的知识上下文。
+- **结构化输出与自动记账**：AI 对话中支持隐藏标签 `$$RECORD[...]$$` 和 `$$WORKOUT[...]$$`，云函数解析后自动写入饮食和训练记录，减少用户手动录入成本。
+- **动作分析服务 MVP**：仓库包含基于 FastAPI、OpenCV、MediaPipe 的动作分析服务雏形，支持异步接收视频分析任务并通过回调更新 `motion_tasks`，为后续动作纠正能力预留扩展路径。
 
-### 用户档案
+## 功能模块
 
-- 录入性别、年龄、身高、体重、健身目标和运动频率。
-- 根据用户信息计算 BMR、TDEE 和每日热量目标。
-- 支持自定义碳水、蛋白质、脂肪比例。
-- 档案数据写入 `users` 集合，并同步部分身体数据到 `body_stats`。
-
-### 饮食记录
-
-- 按早餐、午餐、晚餐、加餐等餐次记录食物。
-- 支持本地食物库搜索、自定义食物、克数换算和营养预览。
-- 支持拍照或相册上传食物图片，由 AI 识别食物并估算热量、蛋白质、脂肪和碳水。
-- 记录写入 `diet_logs` 集合，用于每日统计和 AI 上下文。
-
-### 训练计划与打卡
-
-- 支持 AI 根据用户目标、训练频率和重点部位生成周训练计划。
-- 训练计划可继续手动编辑、保存和导入今日训练。
-- 打卡过程支持训练计时、组间休息、动作组数和完成状态记录。
-- 训练计划写入 `training_plans`，训练记录写入 `workout_records`。
-
-### 身体数据统计
-
-- 记录体重、身高、体脂、瘦体重、腰围等指标。
-- 同日记录自动覆盖，便于维护每日身体数据快照。
-- 使用小程序 Canvas 绘制趋势图，展示身体变化。
-- 数据写入 `body_stats`，并同步更新 `users` 中的最新身体字段。
-
-### AI 综合助手
-
-- 读取今日饮食、今日训练、最近训练记录和用户档案。
-- 支持饮食分析、训练建议、健身问答和自然语言记录。
-- 当用户明确说“帮我记一下饮食/训练”时，AI 会输出隐藏结构化标签，云函数解析后自动写库。
-- 支持 RAG 增强：优先调用 FastAPI RAG 服务，失败时回退普通大模型问答。
-
-### 动作纠正 MVP
-
-- 项目包含动作分析服务和任务表设计，支持深蹲、俯卧撑、平板支撑等动作的异步分析扩展。
-- 设计链路为：小程序上传视频 -> 创建动作分析任务 -> FastAPI 服务抽帧和姿态分析 -> 回调云函数 -> 写入 `motion_tasks`。
-- 当前仓库中保留了动作分析服务、查询和回调云函数，适合作为后续迭代模块。
+| 模块 | 功能说明 |
+| --- | --- |
+| 首页概览 | 展示今日饮食、训练和身体数据摘要，提供主要功能入口 |
+| 用户档案 | 维护性别、年龄、身高、体重、目标、训练频率和营养比例等基础信息 |
+| 饮食记录 | 支持按餐次记录食物、搜索本地食物库、自定义食物和图片识别估算营养 |
+| AI 综合助手 | 结合用户档案、饮食记录和训练记录进行健身问答、饮食建议和自然语言记录 |
+| 训练计划 | 根据目标和训练频率生成周训练计划，支持保存、编辑、导入今日训练和打卡 |
+| 身体数据 | 记录体重、体脂、腰围、瘦体重等数据，并通过小程序 Canvas 展示趋势 |
+| RAG 知识库 | 通过 FastAPI 服务检索健身知识文档，增强 AI 回答的专业性和场景相关性 |
+| 动作分析 MVP | 接收动作视频分析任务，使用姿态识别结果生成评分、总结和回调结果 |
+| 云函数层 | 统一处理 AI 调用、用户信息保存、身体数据读写和动作任务查询/更新 |
 
 ## 技术栈
 
-| 层级 | 技术 |
+| 类别 | 技术 |
 | --- | --- |
-| 小程序端 | 微信原生小程序、WXML、WXSS、JavaScript、Canvas |
-| 云开发 | 微信云函数、云数据库、云存储 |
-| AI 调用 | 硅基流动 OpenAI-compatible API、Kimi-K2.5、GLM-4.7 备用模型 |
-| RAG 服务 | FastAPI、ChromaDB、BAAI/bge-m3 Embedding、httpx |
-| 动作分析 | FastAPI、FFmpeg、MediaPipe Pose、规则引擎 |
-| 数据与配置 | 云数据库集合、环境变量、`.env.example` |
+| 前端 | 微信原生小程序、JavaScript、WXML、WXSS、Canvas |
+| 后端 | 微信云函数、Node.js、FastAPI、Uvicorn |
+| AI / 大模型 | 硅基流动 OpenAI-compatible API、Kimi-K2.5、GLM-4.7 备用模型、Prompt 设计、结构化输出解析 |
+| RAG / 向量检索 | ChromaDB、BAAI/bge-m3 Embedding、知识库 Markdown 文档、httpx |
+| 动作分析 | OpenCV、MediaPipe、NumPy、异步任务回调 |
+| 数据库与存储 | 微信云数据库、微信云存储、Chroma 本地向量库 |
+| 工程工具 | Git、微信开发者工具、Python venv、requirements.txt、环境变量配置 |
 
-## 目录结构
+## 项目结构
 
 ```text
 FitAgent/
-├── README.md
-├── README_RAG.md
-├── knowledge_base/                       # RAG 健身知识库 Markdown
+├── README.md                              # 项目说明文档
+├── README_RAG.md                          # RAG 服务补充说明
+├── project.config.json                    # 微信开发者工具项目配置
+├── knowledge_base/                        # RAG 使用的健身知识库 Markdown 文档
 └── jianshenzhushou/
-    ├── miniprogram/                      # 微信小程序页面与工具函数
-    │   ├── pages/index/                  # 首页与功能入口
-    │   ├── pages/profile/                # 用户档案
-    │   ├── pages/diet/                   # 饮食统计
-    │   ├── pages/diet-add/               # 食物添加与图片识别
-    │   ├── pages/workout/                # 训练计划与打卡
-    │   ├── pages/ai-chat/                # AI 综合助手
-    │   └── pages/body-stats/             # 身体数据趋势
-    ├── cloudfunctions/                   # 微信云函数
-    │   ├── aiSuggest/                    # 统一 AI 云函数
-    │   ├── saveUserProfile/
-    │   ├── saveBodyStats/
-    │   ├── getBodyStats/
-    │   ├── listMotionTasks/
-    │   ├── getMotionTask/
-    │   └── updateMotionTask/
-    ├── rag-service/                      # FastAPI RAG 服务
-    ├── motion-analysis-service/          # FastAPI 动作分析服务
+    ├── miniprogram/                       # 微信小程序前端
+    │   ├── app.js                         # 小程序初始化与云开发环境配置
+    │   ├── app.json                       # 页面路由与全局配置
+    │   ├── app.wxss                       # 全局样式
+    │   ├── pages/
+    │   │   ├── index/                     # 首页概览
+    │   │   ├── profile/                   # 用户档案
+    │   │   ├── diet/                      # 饮食列表与每日总结
+    │   │   ├── diet-add/                  # 新增饮食与图片识别
+    │   │   ├── ai-chat/                   # AI 综合问答
+    │   │   ├── workout/                   # 训练计划与打卡
+    │   │   ├── workout-ai-chat/           # 训练相关 AI 对话页面
+    │   │   └── body-stats/                # 身体数据记录与趋势
+    │   └── utils/                         # 小程序工具函数
+    ├── cloudfunctions/                    # 微信云函数
+    │   ├── aiSuggest/                     # AI 调用、RAG 转发、结构化标签解析
+    │   ├── saveUserProfile/               # 保存用户档案
+    │   ├── saveBodyStats/                 # 保存身体数据
+    │   ├── getBodyStats/                  # 查询身体数据
+    │   ├── listMotionTasks/               # 查询动作分析任务列表
+    │   ├── getMotionTask/                 # 查询单个动作分析任务
+    │   └── updateMotionTask/              # 动作分析服务回调更新任务
+    ├── rag-service/                       # FastAPI RAG 服务
+    │   ├── app/
+    │   │   ├── main.py                    # /healthz、/rag/reindex、/rag/chat
+    │   │   ├── core/                      # 配置、LLM 客户端、向量库逻辑
+    │   │   ├── schemas/                   # 请求与响应模型
+    │   │   └── services/                  # 文档加载、切分、检索和问答服务
+    │   ├── requirements.txt               # RAG 服务 Python 依赖
+    │   └── .env.example                   # RAG 服务环境变量示例
+    ├── motion-analysis-service/           # 动作分析 FastAPI 服务 MVP
+    │   ├── app/
+    │   │   ├── main.py                    # /healthz、/analyze-motion
+    │   │   ├── core/                      # 服务配置
+    │   │   ├── schemas/                   # 动作分析请求与回调模型
+    │   │   └── services/                  # 视频下载、姿态分析和回调客户端
+    │   ├── requirements.txt               # 动作分析服务 Python 依赖
+    │   └── README.md                      # 动作分析服务说明
     └── docs/
+        └── motion-correction-mvp.md       # 动作纠正 MVP 设计说明
 ```
 
-## 系统架构
+## 核心流程
 
-```text
-微信小程序
-  -> 用户档案 / 饮食 / 训练 / 身体数据 / AI 对话
-  -> 微信云数据库与云存储
-  -> 微信云函数 aiSuggest
-       -> 食物识别 / 饮食总结 / 训练计划 / 普通问答
-       -> RAG 服务 /rag/chat
-           -> Chroma 检索 knowledge_base
-           -> 调用大模型生成回答
-  -> 动作分析服务 /analyze-motion
-       -> 视频抽帧 / 姿态识别 / 规则评分 / 回调写库
+```mermaid
+flowchart LR
+    A["微信小程序"] --> B["微信云函数"]
+    B --> C["微信云数据库"]
+    B --> D["大模型 API"]
+    B --> E["FastAPI RAG 服务"]
+    E --> F["Chroma 向量库"]
+    E --> G["knowledge_base 文档"]
+    H["动作分析服务 MVP"] --> B
+    H --> I["OpenCV / MediaPipe"]
 ```
 
-FitAgent 把业务数据留在微信云开发体系内，把相对独立、计算逻辑更重的 AI 能力拆到 FastAPI 服务中。这样既能保持小程序开发和部署简单，又能让 RAG、动作分析等模块独立扩展。
+## 快速开始
 
-## AI 调用设计
-
-统一 AI 云函数为 `cloudfunctions/aiSuggest`，根据 `action` 分发不同任务：
-
-| action | 功能 |
-| --- | --- |
-| `recognizeFood` | 根据云存储图片识别食物和营养数据 |
-| `suggestMeal` | 根据今日摄入和目标生成下一餐建议 |
-| `summarizeDailyDiet` | 总结今日饮食并给出简短建议 |
-| `chat` | 综合健身问答，优先 RAG，失败回退普通大模型 |
-| `suggestWorkout` | 生成个性化周训练计划 |
-
-### 食物图片识别
-
-1. 小程序选择或拍摄图片。
-2. 前端压缩图片后上传到微信云存储，得到 `fileID`。
-3. 云函数通过 `cloud.getTempFileURL` 获取临时 URL，优先把图片 URL 发给视觉模型。
-4. 如果临时 URL 失败，回退为下载图片并转成 base64 data URL。
-5. 大模型按 JSON 格式返回食物名称、每 100g 热量、蛋白质、脂肪、碳水和估算重量。
-6. 前端展示识别结果，用户确认后写入 `diet_logs`。
-
-### 自然语言自动记录
-
-AI 对话页会把今日饮食、今日训练、最近训练记录拼入系统提示词。用户说“我刚吃了鸡胸肉和米饭，帮我记一下”时，AI 会在回复末尾附加隐藏标签：
-
-```text
-$$RECORD[
-{"name":"鸡胸肉","meal_type":"lunch","grams":150,"calories":248,"protein":46,"fat":5,"carbs":0,"time_text":"今天中午"}
-]$$
-```
-
-云函数解析 `$$RECORD[...]$$` 后写入 `diet_logs`，再把隐藏标签从用户可见回复中删除。
-
-训练记录同理，AI 会输出：
-
-```text
-$$WORKOUT[
-{"title":"胸肩训练","duration_minutes":45,"time_text":"今天下午","exercises":[{"name":"卧推","sets":4,"reps":"8-10次"}]}
-]$$
-```
-
-云函数解析后写入 `workout_records`。
-
-### RAG 问答
-
-`chat` 动作会优先调用 `rag-service`：
-
-1. 云函数读取用户档案、近 14 天身体数据、近 14 天饮食记录和最近训练记录。
-2. 发送 `user_context` 和当前问题到 `/rag/chat`。
-3. RAG 服务用问题向量检索 `knowledge_base` 中的相关健身知识。
-4. 将用户真实记录、检索片段和当前问题合并成提示词。
-5. 调用大模型生成回答，并返回引用来源。
-6. 如果 RAG 服务不可用，云函数自动回退普通大模型问答。
-
-RAG 提示词要求模型优先参考用户真实记录，不进行疾病诊断，不给医疗处方，出现疼痛、胸闷、头晕等风险情况时提醒咨询专业人士。
-
-## 数据库集合
-
-| 集合 | 用途 |
-| --- | --- |
-| `users` | 用户档案、BMR、TDEE、每日热量目标、营养比例 |
-| `body_stats` | 体重、身高、体脂、瘦体重、腰围历史 |
-| `diet_logs` | 饮食记录、餐次、食物、克数、热量和三大营养素 |
-| `training_plans` | 周训练计划、训练日和动作列表 |
-| `workout_records` | 训练打卡记录、动作、组数、时长和休息时间 |
-| `motion_tasks` | 动作纠正异步任务、状态、评分和分析结果 |
-
-## 本地运行
-
-### 1. 打开小程序
-
-使用微信开发者工具打开：
-
-```text
-jianshenzhushou/
-```
-
-根目录中的 `project.config.json` 已做公开仓库处理，真实 AppID 和本地私有配置请放在 `project.private.config.json` 中，不要提交到仓库。
-
-### 2. 配置云函数环境变量
-
-`aiSuggest` 需要配置：
+### 1. 克隆项目
 
 ```bash
-SILICONFLOW_API_KEY=your_api_key_here
-RAG_ENABLED=true
-RAG_SERVICE_URL=http://your-rag-service-host:8001
-RAG_SERVICE_TOKEN=your_optional_shared_token
-RAG_SERVICE_TIMEOUT_MS=12000
+git clone git@github.com:LiPeiCong60/FitAgent.git
+cd FitAgent
 ```
 
-如果没有部署 RAG 服务，可设置：
+### 2. 启动微信小程序
 
-```bash
-RAG_ENABLED=false
-```
+1. 使用微信开发者工具导入项目目录。
+2. 将 `jianshenzhushou/miniprogram/app.js` 中的云开发环境 ID 替换为自己的环境。
+3. 在微信云开发控制台创建所需集合，例如 `users`、`diet_logs`、`workout_records`、`training_plans`、`body_stats`、`motion_tasks`。
+4. 上传并部署 `jianshenzhushou/cloudfunctions/` 下的云函数。
+5. 为 `aiSuggest` 云函数配置大模型 API Key 和 RAG 服务地址。
 
-此时 AI 对话会直接走普通大模型路径。
+小程序端没有独立的 npm 启动脚本，运行和调试主要依赖微信开发者工具。
 
 ### 3. 启动 RAG 服务
 
 ```bash
 cd jianshenzhushou/rag-service
 python -m venv .venv
-. .venv/bin/activate
+source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
-```
-
-编辑 `.env`：
-
-```bash
-SILICONFLOW_API_KEY=your_api_key_here
-RAG_API_TOKEN=change_me_optional_shared_token
-RAG_CHAT_MODEL=Pro/moonshotai/Kimi-K2.5
-RAG_EMBEDDING_MODEL=BAAI/bge-m3
-RAG_KNOWLEDGE_BASE_DIR=../../knowledge_base
-RAG_CHROMA_DIR=.chroma
-RAG_TOP_K=5
-```
-
-启动服务：
-
-```bash
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
 ```
 
-测试：
+启动后可访问：
 
-```bash
-curl http://127.0.0.1:8001/healthz
-curl -X POST http://127.0.0.1:8001/rag/reindex \
-  -H "Authorization: Bearer $RAG_API_TOKEN"
-```
+- 接口文档：`http://127.0.0.1:8001/docs`
+- 健康检查：`http://127.0.0.1:8001/healthz`
+
+如需让云函数访问本地 RAG 服务，需要使用公网部署地址或内网穿透地址，并配置到 `RAG_SERVICE_URL`。
 
 ### 4. 启动动作分析服务
 
 ```bash
 cd jianshenzhushou/motion-analysis-service
 python -m venv .venv
-. .venv/bin/activate
+source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-可选环境变量：
+启动后可访问：
 
-```bash
-MOTION_CALLBACK_URL=your_update_motion_task_endpoint
-MOTION_CALLBACK_TOKEN=your_shared_secret
+- 接口文档：`http://127.0.0.1:8000/docs`
+- 健康检查：`http://127.0.0.1:8000/healthz`
+
+当前 `motion-analysis-service` 目录未提供 `.env.example`，需要根据部署环境补充回调地址、回调令牌和工作目录等配置。
+
+## 环境变量说明
+
+### `aiSuggest` 云函数
+
+```env
+SILICONFLOW_API_KEY=your_api_key_here
+RAG_ENABLED=true
+RAG_SERVICE_URL=https://your-rag-service.example.com/rag/chat
+RAG_SERVICE_TOKEN=optional_shared_token
+RAG_SERVICE_TIMEOUT_MS=12000
+```
+
+### RAG 服务
+
+`jianshenzhushou/rag-service/.env.example` 已提供基础配置，可按实际环境复制为 `.env`：
+
+```env
+SILICONFLOW_API_KEY=your_api_key_here
+SILICONFLOW_BASE_URL=https://api.siliconflow.cn/v1
+RAG_CHAT_MODEL=Pro/moonshotai/Kimi-K2.5
+RAG_EMBEDDING_MODEL=BAAI/bge-m3
+RAG_TOP_K=5
+RAG_API_TOKEN=change_me_optional_shared_token
+RAG_KNOWLEDGE_BASE_DIR=../../knowledge_base
+RAG_CHROMA_DIR=.chroma
+RAG_CHUNK_SIZE=700
+RAG_CHUNK_OVERLAP=120
+RAG_REQUEST_TIMEOUT_SECONDS=45
+RAG_EMBEDDING_BATCH_SIZE=24
+RAG_CHROMA_COLLECTION=fitagent_knowledge
+```
+
+### 动作分析服务与回调
+
+```env
 MOTION_ANALYSIS_FPS=6
+MOTION_WORKSPACE_DIR=tmp
+MOTION_MOTION_CALLBACK_URL=https://your-cloud-function-callback.example.com
+MOTION_MOTION_CALLBACK_TOKEN=your_callback_token
+MOTION_REQUEST_TIMEOUT_SECONDS=20
 ```
 
-## 隐私与安全
+当前动作分析服务的配置类使用 `env_prefix="MOTION_"`，以上变量名对应 `app/core/config.py` 中的字段映射。`updateMotionTask` 云函数会校验 `MOTION_CALLBACK_TOKEN`，部署时需要保证动作分析服务传入的 `callbackToken` 与云函数环境变量一致。子服务 README 中使用了更直观的 `MOTION_CALLBACK_URL`、`MOTION_CALLBACK_TOKEN` 表达，后续建议统一配置命名并补充 `.env.example`。
 
-本仓库已按公开 GitHub 仓库处理：
+## API 接口说明
 
-- API Key 通过环境变量读取，不提交到代码。
-- `.env`、`project.private.config.json`、依赖目录、虚拟环境、压缩包、缓存、日志和常见图片/视频文件已加入 `.gitignore`。
-- 小程序真实 AppID 不应直接提交，公开配置中使用 `touristappid`。
-- 用户上传图片和训练视频属于个人数据，生产环境应配置访问权限、生命周期和删除策略。
+### 微信云函数
 
-## 项目亮点
+| 云函数 | 主要参数 | 功能说明 |
+| --- | --- | --- |
+| `aiSuggest` | `action` | AI 能力统一入口，根据 `action` 分发到不同场景 |
+| `aiSuggest` | `action=recognizeFood`、`imageFileID` | 识别食物图片，返回食物名称、热量和营养估算 |
+| `aiSuggest` | `action=summarizeDailyDiet`、饮食统计数据 | 汇总当天饮食并生成建议 |
+| `aiSuggest` | `action=suggestMeal`、目标热量和已摄入数据 | 生成下一餐饮食建议 |
+| `aiSuggest` | `action=suggestWorkout`、用户档案和训练偏好 | 生成训练计划建议 |
+| `aiSuggest` | `action=chat`、`messages` | 健身问答，支持 RAG 增强和自然语言记录 |
+| `saveUserProfile` | 用户档案字段 | 保存或更新用户档案，并同步基础身体数据 |
+| `saveBodyStats` | 体重、体脂、腰围等身体数据 | 保存身体数据，同日记录会更新覆盖 |
+| `getBodyStats` | `limit` | 查询当前用户的身体数据记录 |
+| `listMotionTasks` | `limit` | 查询动作分析任务列表 |
+| `getMotionTask` | `taskId` | 查询单个动作分析任务详情 |
+| `updateMotionTask` | `taskId`、`status`、`callbackToken` | 接收动作分析服务回调并更新任务状态 |
 
-- 小程序、云函数、云数据库、RAG 服务和动作分析服务组成完整闭环。
-- AI 能力不是简单聊天，而是能完成识图、总结、计划生成、问答和自动写库。
-- RAG 问答结合用户真实记录与健身知识库，回答更贴合个人场景。
-- 使用结构化隐藏标签让自然语言记录变成数据库记录，降低用户输入成本。
-- 通过独立 FastAPI 服务承载 RAG 和动作分析，便于后续扩展和部署。
+### RAG FastAPI 服务
 
-## 适用场景
+| 请求方法 | 接口路径 | 功能说明 | 请求参数简述 |
+| --- | --- | --- | --- |
+| `GET` | `/healthz` | 服务健康检查，返回知识库路径和向量数量 | 无 |
+| `POST` | `/rag/reindex` | 重新加载 `knowledge_base` 并构建向量索引 | 可通过 Bearer Token 保护 |
+| `POST` | `/rag/chat` | 基于用户问题、用户上下文和知识库检索结果生成回答 | `user_id`、`question`、`user_context`、`top_k` |
 
-- AI 应用开发项目展示。
-- 微信小程序 + 云开发实践。
-- RAG 知识库问答实践。
-- 大模型结构化输出与业务落库实践。
-- 健身、饮食、训练数据管理类产品原型。
+### 动作分析 FastAPI 服务
+
+| 请求方法 | 接口路径 | 功能说明 | 请求参数简述 |
+| --- | --- | --- | --- |
+| `GET` | `/healthz` | 服务健康检查 | 无 |
+| `POST` | `/analyze-motion` | 接收动作视频分析任务，后台执行姿态分析并回调结果 | `taskId`、`exerciseType`、`videoFileId`、`videoTempUrl`、`callbackUrl`、`callbackToken` |
+
+## 数据存储
+
+| 集合 / 存储 | 说明 |
+| --- | --- |
+| `users` | 用户档案、目标、身体基础数据和营养比例 |
+| `diet_logs` | 用户饮食记录，包括餐次、食物、克数、热量和营养素 |
+| `workout_records` | 用户训练打卡记录 |
+| `training_plans` | AI 生成或用户保存的训练计划 |
+| `body_stats` | 体重、体脂、腰围等身体数据快照 |
+| `motion_tasks` | 动作分析任务状态、评分、总结和结果 |
+| 微信云存储 | 食物图片、动作视频等用户上传文件 |
+| ChromaDB | RAG 服务生成的本地向量索引 |
+
+## 功能展示
+
+当前仓库未包含正式截图，可在 `docs/images/` 下补充小程序页面截图后替换以下占位图。
+
+![首页截图](./docs/images/home.png)
+
+![饮食记录截图](./docs/images/diet.png)
+
+![AI 对话截图](./docs/images/ai-chat.png)
+
+![训练计划截图](./docs/images/workout.png)
+
+## 我的职责 / 个人贡献
+
+在项目中主要负责需求梳理、技术选型和核心功能实现：完成微信小程序主要页面开发，设计用户档案、饮食记录、训练记录和身体数据等核心数据结构；基于微信云函数封装大模型调用链路，实现食物识别、饮食总结、训练计划生成和 AI 问答；设计 Prompt 输出格式与隐藏结构化标签解析逻辑，使 AI 对话结果能够自动写入业务数据；搭建 FastAPI RAG 服务，将健身知识文档向量化并接入问答流程；完成小程序、云函数、数据库和 AI 服务之间的联调，并整理项目运行与接口文档。
+
+## 后续优化方向
+
+- 完善动作分析从小程序上传、创建任务、服务分析到结果展示的完整闭环。
+- 为 `motion-analysis-service` 补充 `.env.example`，统一回调环境变量命名和部署文档。
+- 增加云数据库权限规则、索引配置和关键接口鉴权，提升线上使用安全性。
+- 补充云函数和 FastAPI 服务的单元测试、接口测试与错误日志。
+- 优化 RAG 知识库的文档切分、引用展示和回答可追溯性。
+- 增加项目截图、演示视频和部署说明，提升 GitHub 展示效果。
+
+## 说明
+
+本项目中的 API Key、云开发环境 ID、回调令牌等敏感信息均应通过环境变量或部署平台配置管理，不应提交到仓库。`rag-service` 已提供 `.env.example`，其他服务可按本文档中的变量说明继续补充示例配置。
